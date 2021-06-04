@@ -7,7 +7,7 @@ Google Map Server
 
 dockerfile镜像详见docker文件夹
 
-其微软runtime 见 [aspnetcore]([ASP.NET Core Runtime (docker.com)](https://hub.docker.com/_/microsoft-dotnet-aspnet))
+其微软runtime 见 [aspnetcore](https://hub.docker.com/_/microsoft-dotnet-aspnet)
 
 ##### 2.本地编译发布
 使用 dotnet publish 发布
