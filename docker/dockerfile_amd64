@@ -1,0 +1,8 @@
+FROM  mcr.microsoft.com/dotnet/aspnet:5.0.6-focal-amd64
+WORKDIR /app
+COPY . .
+EXPOSE 80
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends libgdiplus libc6-dev
+VOLUME [ "/app/map" ]
+CMD [ "dotnet","MapService.dll" ]
