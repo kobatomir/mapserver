@@ -11,20 +11,20 @@ namespace MapService
 {
     public class MapServer
     {
-
-        public byte[] Request(string type, int nX, int nY, int nZ)
+        static object lockobj = new object();
+        public async Task<byte[]> Request(string type, int nX, int nY, int nZ)
         {
             nZ++;
             var bBuff = (byte[])null;
             var bBuff1 = type[0] switch
             {
-                's' => GetMap(nY, nX, nZ, ServerConfigInstance.Instance.SatellitePath, ServerConfigInstance.Instance.SatelliteName),
-                't' => GetMap(nY, nX, nZ, ServerConfigInstance.Instance.TerrainPath, ServerConfigInstance.Instance.TerrainName),
-                'm' => GetMap(nY, nX, nZ, ServerConfigInstance.Instance.LinePath, ServerConfigInstance.Instance.LineName),
-                'v' => GetMap(nY, nX, nZ, ServerConfigInstance.Instance.VectorPath, ServerConfigInstance.Instance.VectorName),
+                's' =>await GetMap(nY, nX, nZ, ServerConfigInstance.Instance.SatellitePath, ServerConfigInstance.Instance.SatelliteName),
+                't' =>await GetMap(nY, nX, nZ, ServerConfigInstance.Instance.TerrainPath, ServerConfigInstance.Instance.TerrainName),
+                'm' =>await GetMap(nY, nX, nZ, ServerConfigInstance.Instance.LinePath, ServerConfigInstance.Instance.LineName),
+                'v' =>await GetMap(nY, nX, nZ, ServerConfigInstance.Instance.VectorPath, ServerConfigInstance.Instance.VectorName),
                 _ => null
             };
-            var bBuff2 = type.Contains("h") ? GetMap(nY, nX, nZ, ServerConfigInstance.Instance.LabelPath, ServerConfigInstance.Instance.LabelName) : null;
+            var bBuff2 = type.Contains("h") ?await GetMap(nY, nX, nZ, ServerConfigInstance.Instance.LabelPath, ServerConfigInstance.Instance.LabelName) : null;
             var hash = type.Contains("s") || type.Contains("t") || type.Contains("v") || type.Contains("m");
             if (hash && !type.Contains("h")) bBuff = bBuff1;
             else if (hash && type.Contains("h"))
@@ -42,7 +42,7 @@ namespace MapService
         }
 
 
-        private byte[] GetMap(int nRow, int nCol, int nZoom, string strFilePath, string strFileName)
+        private async Task<byte[]> GetMap(int nRow, int nCol, int nZoom, string strFilePath, string strFileName)
         {
             var buffer1 = (byte[])null;
             var buffer2 = new byte[20];
@@ -57,7 +57,7 @@ namespace MapService
                     if (!File.Exists(path2)) continue;
                     var path3 = Path.Combine(path1, "range.txt");
                     if (!File.Exists(path3)) continue;
-                    var strArray = File.ReadAllText(path3).Split(',');
+                    var strArray =(await File.ReadAllTextAsync(path3)).Split(',');
                     var longi1 = Convert.ToDouble(strArray[0]);
                     var lati = Convert.ToDouble(strArray[1]);
                     var longi2 = Convert.ToDouble(strArray[2]);
@@ -72,7 +72,7 @@ namespace MapService
                     long offset2 = 0;
                     var count = 0;
                     short num = 0;
-                    lock (this)
+                    lock (lockobj)
                     {
                         var fileStream = (FileStream)null;
                         try
@@ -97,7 +97,7 @@ namespace MapService
                     }
                     if (count < 100) return null;
                     var path4 = Path.Combine(path1, strFileName + num.ToString() + ".dat");
-                    lock (this)
+                    lock (lockobj)
                     {
                         FileStream fileStream = null;
                         try
@@ -107,6 +107,9 @@ namespace MapService
                             buffer1 = new byte[count];
                             if (fileStream.Read(buffer1, 0, count) != count) buffer1 = null;
                             break;
+                        }catch(Exception e)
+                        {
+                            Console.WriteLine(e);
                         }
                         finally
                         {
@@ -114,9 +117,9 @@ namespace MapService
                         }
                     }
                 }
-                catch
+                catch(Exception e)
                 {
-
+                    Console.WriteLine(e);
                 }
             }
             return buffer1;

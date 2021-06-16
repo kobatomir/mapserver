@@ -9,9 +9,9 @@ namespace MapService.Controllers
     public class MapController : Controller
     {
         [HttpGet("/MapServer")]
-        public IActionResult Map(string lyr, int x, int y, int z)
+        public async Task<IActionResult> Map(string lyr, int x, int y, int z)
         {
-            var bytes = new MapServer().Request(lyr, x, y, z);
+            var bytes = await new MapServer().Request(lyr, x, y, z);
             if (bytes == null) return new EmptyResult();
             return File(bytes, "image/png");
         }
